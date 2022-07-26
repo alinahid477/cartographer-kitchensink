@@ -1,0 +1,66 @@
+apiVersion: carto.run/v1alpha1
+kind: ClusterRunTemplate
+metadata:
+  name: git-writer-run
+spec:
+  template:
+    apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    metadata:
+      generateName: $(runnable.metadata.name)$-
+      labels: $(runnable.metadata.labels)$
+    spec:
+      workspaces:
+      - name: ssh-directory
+        secret:
+          secretName: $(runnable.spec.inputs.git_ssh_secret)$
+      serviceAccountName: $(runnable.spec.inputs.serviceAccountName)$
+      taskRef: $(runnable.spec.inputs.taskRef)$
+      params: $(runnable.spec.inputs.params)$
+---
+apiVersion: carto.run/v1alpha1
+kind: ClusterTemplate
+metadata:
+  name: git-writer
+spec:
+  params:
+  - name: gitwriter_git_ssh_secret
+    default: git-ssh
+  - name: gitwriter_repository
+    default: ssh://git@github.com/alinahid477/demo-app-deliverables.git
+  - name: gitwriter_branch
+    default: main
+  - name: gitwriter_user_name
+    default: cartowebsc
+  - name: gitwriter_user_email
+    default: cartwebsc@cluster.local
+  - name: gitwriter_commit_message
+    default: carto-commit
+  template:
+    apiVersion: carto.run/v1alpha1
+    kind: Runnable
+    metadata:
+      name: git-writer-runnable
+    spec:
+      serviceAccountName: carto-sa
+      runTemplateRef:
+        name: git-writer-run
+      inputs:
+        serviceAccountName: carto-sa
+        taskRef:
+          kind: ClusterTask
+          name: gitwriter-task
+        git_ssh_secret: $(params.gitwriter_git_ssh_secret)$
+        params:
+        - name: git_repository
+          value: $(params.gitwriter_repository)$
+        - name: git_branch
+          value: $(params.gitwriter_branch)$
+        - name: git_user_name
+          value: $(params.gitwriter_user_name)$
+        - name: git_user_email
+          value: $(params.gitwriter_user_email)$
+        - name: git_commit_message
+          value: $(params.gitwriter_commit_message)$
+        - name: git_files
+          value: $(config)$

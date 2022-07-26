@@ -1,0 +1,63 @@
+---
+apiVersion: carto.run/v1alpha1
+kind: ClusterSupplyChain
+metadata:
+  name: secops-sc
+spec:
+  selector:
+    app.tanzu.vmware.com/workload-type: web
+    app.tanzu.vmware.com/workload-path: secured
+  serviceAccountRef:
+    name: carto-sa
+    namespace: default
+  resources:
+    - name: source-provider
+      templateRef:
+        kind: ClusterSourceTemplate
+        name: source
+
+
+    - name: source-scanner
+      templateRef:
+        kind: ClusterSourceTemplate
+        name: srcscanner
+      sources:
+        - resource: source-provider
+          name: source
+
+
+    - name: image-builder
+      templateRef:
+        kind: ClusterImageTemplate
+        name: kpackimage
+      sources:
+        - resource: source-scanner
+          name: source
+
+    - name: image-scanner
+      templateRef:
+        kind: ClusterImageTemplate
+        name: imgscanner
+      images:
+        - resource: image-builder
+          name: image
+
+
+    - name: config-provider
+      templateRef:
+        kind: ClusterConfigTemplate
+        name: app-config
+      images:
+        - resource: image-scanner
+          name: image
+
+
+    - name: git-writer
+      templateRef:
+        kind: ClusterTemplate
+        name: git-writer
+      configs:
+        - resource: config-provider
+          name: data
+
+

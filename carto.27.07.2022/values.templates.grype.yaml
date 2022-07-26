@@ -1,0 +1,23 @@
+#@data/values
+---
+service_account:
+  name: carto-sa
+  namespace: default
+source_grype:
+  template_name: srcscanner
+  tekton_task_type: ClusterTask
+  tekton_task_name: grype-scan-task
+  registry_secret: kpack-default-regcred
+  config_secret: grype-config
+
+
+
+image_grype:
+  template_name: imgscanner
+  tekton_task_type: ClusterTask
+  tekton_task_name: grype-scan-task
+  registry_secret: kpack-default-regcred
+  config_secret: grype-config
+
+
+

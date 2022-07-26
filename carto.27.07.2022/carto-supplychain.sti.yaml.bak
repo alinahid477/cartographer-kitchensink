@@ -1,0 +1,34 @@
+---
+apiVersion: carto.run/v1alpha1
+kind: ClusterSupplyChain
+metadata:
+  name: sti-supplychain
+spec:
+  selector:
+    app.tanzu.vmware.com/workload-type: web
+  serviceAccountRef:
+    name: carto-sa
+  resources:
+    - name: source-provider
+      templateRef:
+        kind: ClusterSourceTemplate
+        name: source
+
+
+    - name: source-tester
+      templateRef:
+        kind: ClusterSourceTemplate
+        name: test
+      sources:
+        - resource: source-provider
+          name: source
+
+
+    - name: image-builder
+      templateRef:
+        kind: ClusterImageTemplate
+        name: kpackimage
+      sources:
+        - resource: source-tester
+          name: source
+

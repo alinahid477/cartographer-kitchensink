@@ -1,0 +1,55 @@
+apiVersion: carto.run/v1alpha1
+kind: ClusterRunTemplate
+metadata:
+  name: imgscanner-run
+spec:
+  outputs:
+    latestImage: spec.params[?(@.name=="image-url")].value
+  template:
+    apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    metadata:
+      generateName: $(runnable.metadata.name)$-
+      labels: $(runnable.metadata.labels)$
+    spec:
+      workspaces:
+      - name: registry-credentials
+        secret:
+          secretName: $(runnable.spec.inputs.grype_registry_secret)$
+      - name: grype-config
+        secret:
+          secretName: $(runnable.spec.inputs.grype_config_secret)$
+      serviceAccountName: $(runnable.spec.inputs.serviceAccountName)$
+      taskRef: $(runnable.spec.inputs.taskRef)$
+      params: $(runnable.spec.inputs.params)$
+---
+apiVersion: carto.run/v1alpha1
+kind: ClusterImageTemplate
+metadata:
+  name: imgscanner
+spec:
+  imagePath: .status.outputs.latestImage
+  params:
+  - name: grype_registry_secret
+    default: kpack-default-regcred
+  - name: grype_config_secret
+    default: grype-config
+  template:
+    apiVersion: carto.run/v1alpha1
+    kind: Runnable
+    metadata:
+      name: imgscanner-runnable
+    spec:
+      serviceAccountName: carto-sa
+      runTemplateRef:
+        name: imgscanner-run
+      inputs:
+        serviceAccountName: carto-sa
+        taskRef:
+          kind: ClusterTask
+          name: grype-scan-task
+        grype_registry_secret: $(params.grype_registry_secret)$
+        grype_config_secret: $(params.grype_config_secret)$
+        params:
+        - name: image-url
+          value: $(image)$

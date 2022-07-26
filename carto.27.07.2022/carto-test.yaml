@@ -1,0 +1,44 @@
+apiVersion: carto.run/v1alpha1
+kind: ClusterRunTemplate
+metadata:
+  name: test-run
+spec:
+  outputs:
+    url: spec.params[?(@.name=="blob-url")].value
+    revision: spec.params[?(@.name=="blob-revision")].value
+  template:
+    apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    metadata:
+      generateName: $(runnable.metadata.name)$-
+    spec:
+      serviceAccountName: carto-sa
+      taskRef: $(runnable.spec.inputs.taskRef)$
+      params: $(runnable.spec.inputs.params)$
+---
+apiVersion: carto.run/v1alpha1
+kind: ClusterSourceTemplate
+metadata:
+  name: test
+spec:
+  urlPath: .status.outputs.url
+  revisionPath: .status.outputs.revision
+  template:
+    apiVersion: carto.run/v1alpha1
+    kind: Runnable
+    metadata:
+      name: test-runnable
+    spec:
+      serviceAccountName: carto-sa
+      runTemplateRef:
+        name: test-run
+      inputs:
+        taskRef:
+          kind: ClusterTask
+          name: mvn-test
+        source: $(source)$
+        params:
+        - name: blob-url
+          value: $(source.url)$
+        - name: blob-revision
+          value: $(source.revision)$
