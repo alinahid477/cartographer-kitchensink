@@ -1,0 +1,56 @@
+#@data/values
+---
+service_account:
+  name: carto-sa
+  namespace: default
+src:
+  template_name: source
+  git_secret_name: pvt-git-repo-secret
+  git_poll_interval: 60s
+
+test:
+  template_name: test
+  tekton_task_type: ClusterTask
+  tekton_task_name: maven-test-task
+
+source_grype:
+  template_name: srcscanner
+  tekton_task_type: ClusterTask
+  tekton_task_name: grype-scan-task
+  registry_secret: pvt-registry-secret
+  config_secret: grype-config-image
+
+
+
+kpack:
+  template_name: kpackimage
+  image_prefix: accordingtoali/
+  builder_type: ClusterBuilder
+  builder_name: default
+  service_account: kpack-sa
+
+image_grype:
+  template_name: imgscanner
+  tekton_task_type: ClusterTask
+  tekton_task_name: grype-scan-task
+  registry_secret: pvt-registry-secret
+  config_secret: grype-config-image
+
+
+
+knative:
+  template_name: app-config
+  image_registry_secret_name: pvt-registry-secret
+  
+
+gitwriter:
+  template_name: git-writer
+  tekton_task_type: ClusterTask
+  tekton_task_name: git-writer-task
+  ssh_secret: git-ssh
+  repository: ssh://git@github.com/alinahid477/demo-app-deliverables.git
+  branch: main
+  user_name: az1carto1
+  user_email: az1carto1@cluster.local
+  commit_message: az1carto1-commit
+

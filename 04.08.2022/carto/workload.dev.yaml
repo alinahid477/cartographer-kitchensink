@@ -1,0 +1,13 @@
+apiVersion: carto.run/v1alpha1
+kind: Workload
+metadata:
+  name: devdemoapp
+  labels:
+    app.tanzu.vmware.com/workload-type: web
+    app.tanzu.vmware.com/workload-path: dev
+spec:
+  source:
+    git:
+      url: https://github.com/alinahid477/demo-app-sc.git
+      ref:
+        branch: dev
